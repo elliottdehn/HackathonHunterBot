@@ -2,6 +2,7 @@ package Structures;
 
 import org.osbot.rs07.api.Inventory;
 import org.osbot.rs07.api.LocalWalker;
+import org.osbot.rs07.api.Objects;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.script.Script;
@@ -66,10 +67,20 @@ public class TrapSpot {
 		position = newPos;
 	}
 
-	public void grabTrap(){
+	public void grabTrap(Script script){
 		//if the trap failed, use that object id
 		//if the trap trapped, pick up that object id
 		//if the drop dropped, pick up item id at location
+		switch (this.checkTrap()){
+			Objects objects = script.getObjects();
+			List<RS2Object> atLocation = objects.get(xPos, yPos);
+			case FAIL:
+				break;
+			case SUCCESS:
+				break;
+			case GROUND:
+				break;
+		}
 	}
 	
 	public State checkTrap(){
