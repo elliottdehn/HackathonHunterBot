@@ -1,10 +1,14 @@
 package Structures;
 
+import java.util.List;
+
 import org.osbot.rs07.api.Inventory;
 import org.osbot.rs07.api.LocalWalker;
 import org.osbot.rs07.api.Objects;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Item;
+import org.osbot.rs07.api.model.RS2Object;
+import org.osbot.rs07.input.mouse.MainScreenTileDestination;
 import org.osbot.rs07.script.Script;
 
 import HelperMethods.Core;
@@ -37,16 +41,20 @@ public class TrapSpot {
 		
 	}
 	
-	public void setTrap(Script script){
-		LocalWalker walker = script.getLocalWalker();
-			
-		walker.walk(position);
+	public void setTrap(Script script){			
+		MainScreenTileDestination mainScreenSpot = new MainScreenTileDestination(script.getBot(), position);
+		script.getMouse().click(mainScreenSpot);
 
-
+		while(!script.myPlayer().getPosition().equals(position) || script.myPlayer().isAnimating()){
+			core.waitTime(300);
+			script.getMouse().click(mainScreenSpot);
+		}
 			
 		Inventory inv = script.getInventory();
 		Item trap = inv.getItem(itemID);
-		
+		while(script.myPlayer().isAnimating()){
+			core.waitTime(100);
+		}
 		trap.interact("Lay");
 		while(!script.myPlayer().isAnimating()){
 			core.waitTime(10);
@@ -56,10 +64,7 @@ public class TrapSpot {
 		}
 		
 		script.log("Attempted to lay");
-		
-		while(script.myPlayer().isAnimating()){
-			core.waitTime(100);
-		}
+
 	}
 	
 	public void setTrapPosition(int x, int y, int z){
@@ -68,24 +73,63 @@ public class TrapSpot {
 	}
 
 	public void grabTrap(Script script){
-		//if the trap failed, use that object id
-		//if the trap trapped, pick up that object id
-		//if the drop dropped, pick up item id at location
+		Objects objects = script.getObjects();
+		List<RS2Object> atLocation = objects.get(position.getX(), position.getY());
 		switch (this.checkTrap()){
-			Objects objects = script.getObjects();
-			List<RS2Object> atLocation = objects.get(xPos, yPos);
 			case FAIL:
+				RS2Object failedTrap;
+				for(int i = 0; i < atLocation.size(); i++){
+					if(atLocation.get(i).getId() == failedID){
+						failedTrap = atLocation.get(i);
+						failedTrap.interact("Dismantle");
+						while(!script.myPlayer().isAnimating()){
+							core.waitTime(10);
+						}
+						while(script.myPlayer().isAnimating()){
+							core.waitTime(100);
+						}
+						break;
+					}
+				}
 				break;
 			case SUCCESS:
+				RS2Object successTrap;
+				for(int i = 0; i < atLocation.size(); i++){
+					if(atLocation.get(i).getId() == successID){
+						successTrap = atLocation.get(i);
+						successTrap.interact("Check");
+						while(!script.myPlayer().isAnimating()){
+							core.waitTime(10);
+						}
+						while(script.myPlayer().isAnimating()){
+							core.waitTime(100);
+						}
+						break;
+					}
+				}
 				break;
 			case GROUND:
+				RS2Object groundTrap;
+				for(int i = 0; i < atLocation.size(); i++){
+					if(atLocation.get(i).getId() == groundID){
+						groundTrap = atLocation.get(i);
+						groundTrap.interact("Take");
+						while(!script.myPlayer().isAnimating()){
+							core.waitTime(10);
+						}
+						while(script.myPlayer().isAnimating()){
+							core.waitTime(100);
+						}
+						break;
+					}
+				}
 				break;
 		}
 	}
 	
 	public State checkTrap(){
-		//check the position, use logic with returned id
 		State trapState = State.SET;
+		
 		return trapState;
 	}
 	
