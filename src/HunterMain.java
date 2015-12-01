@@ -2,14 +2,21 @@
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Player;
+import org.osbot.rs07.input.mouse.MainScreenTileDestination;
 import org.osbot.rs07.script.Script;
 import org.osbot.rs07.script.ScriptManifest;
 
+import com.google.common.util.concurrent.Service.State;
+
 import Structures.Node;
 import Structures.TrapSpot;
+import Structures.Activities.handleASingleTrap;
 import Structures.Activities.setUpTrap;
 //standing = 9380
 //failed = 9385
@@ -28,11 +35,17 @@ public class HunterMain extends Script{
 	public TrapSpot trap4;
 	public TrapSpot trap5;
 	
+	public ArrayList<TrapSpot> allTraps = new ArrayList<TrapSpot>();	
+	public LinkedList<TrapSpot> priority = new LinkedList<TrapSpot>();
+	public LinkedList<TrapSpot> secondary = new LinkedList<TrapSpot>();
+	
 	public int readyID = 9380;
 	public int failedID = 9385;
 	public int successID = 9383;
 	public int droppedID = 10008;
 	public int inventoryID = 10008;
+	
+	
 	
 	@Override
 	public void onStart(){
@@ -48,6 +61,11 @@ public class HunterMain extends Script{
 		trap3 = new TrapSpot(place3, readyID, successID, failedID, droppedID, inventoryID);
 		trap4 = new TrapSpot(place4, readyID, successID, failedID, droppedID, inventoryID);
 		
+		allTraps.add(trap1);
+		allTraps.add(trap2);
+		allTraps.add(trap3);
+		allTraps.add(trap4);
+		
 		Node setTrap1 = new setUpTrap(this, trap1);
 		Node setTrap2 = new setUpTrap(this, trap2);
 		Node setTrap3 = new setUpTrap(this, trap3);
@@ -61,10 +79,27 @@ public class HunterMain extends Script{
 			}
 		}
 		
+		
 	}
 	@Override
 	public int onLoop() throws InterruptedException {
-		this.log("stuff");
+		//checks the status of every trap and makes a list of traps to handle and in what order to handle them
+		for(TrapSpot trap : allTraps){
+			if(trap.isGround() && !priority.contains(trap)){
+				//state changed to ground since we last checked
+				if(secondary.contains(trap)){
+					secondary.remove(trap);
+				}
+				priority.add(trap);
+			} else if (!trap.isSet() && !secondary.contains(trap)){
+				secondary.add(trap);
+			}
+		}
+		
+		Node handleASingleTrap = new handleASingleTrap(this, priority, secondary);
+		if(handleASingleTrap.validate()){
+			handleASingleTrap.execute();
+		}
 		return 100;
 	}
 

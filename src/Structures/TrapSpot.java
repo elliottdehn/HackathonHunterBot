@@ -20,7 +20,8 @@ public class TrapSpot {
 	public enum State {
 		FAIL, SUCCESS, GROUND, SET, UNKNOWN, FLOWERED
 	}
-	
+
+	private State currentState;
 	public Position position;
 	
 	private int itemID;
@@ -127,10 +128,40 @@ public class TrapSpot {
 		}
 	}
 	
-	public State checkTrap(){
-		State trapState = State.SET;
+	private State checkTrap(){
+		//insert logic where we set the state
+		currentState = State.SET;
+		return currentState;
+	}
+	
+	public boolean isSet(){
+		this.checkTrap();
+		return (currentState == State.SET) ? true : false;
+	}
+	public boolean isGround(){
+		this.checkTrap();
+		return (currentState == State.GROUND) ? true : false;
+	}
+	public boolean isFlowered(){
+		this.checkTrap();
+		return (currentState == State.FLOWERED) ? true : false;
+	}
+	public boolean isGood(){
+		this.checkTrap();
+		return (currentState == State.SUCCESS) ? true : false;
+	}
+	public boolean isBad(){
+		this.checkTrap();
+		return (currentState == State.FAIL) ? true : false;
+	}
+	
+	public boolean equals(TrapSpot trap){
+		if(this.position.equals(trap.position)){
+			return true;
+		}
 		
-		return trapState;
+		return false;
+		
 	}
 	
 }
