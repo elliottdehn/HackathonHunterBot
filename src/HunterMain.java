@@ -3,17 +3,13 @@
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
 
 import org.osbot.rs07.api.map.Position;
-import org.osbot.rs07.api.model.Player;
-import org.osbot.rs07.input.mouse.MainScreenTileDestination;
 import org.osbot.rs07.script.Script;
 import org.osbot.rs07.script.ScriptManifest;
 
-import com.google.common.util.concurrent.Service.State;
 
+import HelperMethods.Core;
 import Structures.Node;
 import Structures.TrapSpot;
 import Structures.Activities.handleASingleTrap;
@@ -51,10 +47,10 @@ public class HunterMain extends Script{
 	public void onStart(){
 		Position playerPos = this.myPlayer().getPosition();
 		
-		Position place1 = new Position(playerPos.getX() - 1, playerPos.getY(), playerPos.getZ());
-		Position place2 = new Position(playerPos.getX() + 1, playerPos.getY(), playerPos.getZ());
-		Position place3 = new Position(playerPos.getX(), playerPos.getY() - 1, playerPos.getZ());
-		Position place4 = new Position(playerPos.getX(), playerPos.getY() + 1, playerPos.getZ());
+		Position place1 = new Position(playerPos.getX() - 1, playerPos.getY()-1, playerPos.getZ());
+		Position place2 = new Position(playerPos.getX() + 1, playerPos.getY()+1, playerPos.getZ());
+		Position place3 = new Position(playerPos.getX()-1, playerPos.getY() + 1, playerPos.getZ());
+		Position place4 = new Position(playerPos.getX()+1, playerPos.getY() - 1, playerPos.getZ());
 		
 		trap1 = new TrapSpot(place1, readyID, successID, failedID, droppedID, inventoryID);
 		trap2 = new TrapSpot(place2, readyID, successID, failedID, droppedID, inventoryID);
@@ -85,13 +81,14 @@ public class HunterMain extends Script{
 	public int onLoop() throws InterruptedException {
 		//checks the status of every trap and makes a list of traps to handle and in what order to handle them
 		for(TrapSpot trap : allTraps){
-			if(trap.isGround() && !priority.contains(trap)){
+			log("Set: " + trap.isSet(this));
+			if(trap.isGround(this) && !priority.contains(trap)){
 				//state changed to ground since we last checked
 				if(secondary.contains(trap)){
 					secondary.remove(trap);
 				}
 				priority.add(trap);
-			} else if (!trap.isSet() && !secondary.contains(trap)){
+			} else if (!trap.isSet(this) && !secondary.contains(trap)){
 				secondary.add(trap);
 			}
 		}
@@ -99,6 +96,7 @@ public class HunterMain extends Script{
 		Node handleASingleTrap = new handleASingleTrap(this, priority, secondary);
 		if(handleASingleTrap.validate()){
 			handleASingleTrap.execute();
+		
 		}
 		return 100;
 	}

@@ -3,8 +3,6 @@ package Structures;
 import java.util.List;
 
 import org.osbot.rs07.api.Inventory;
-import org.osbot.rs07.api.LocalWalker;
-import org.osbot.rs07.api.Objects;
 import org.osbot.rs07.api.map.Position;
 import org.osbot.rs07.api.model.Item;
 import org.osbot.rs07.api.model.RS2Object;
@@ -21,14 +19,13 @@ public class TrapSpot {
 		FAIL, SUCCESS, GROUND, SET, UNKNOWN, FLOWERED
 	}
 
-	private State currentState;
 	public Position position;
 	
-	private int itemID;
-	private int failedID;
-	private int groundID;
-	private int successID;
-	private int setID;
+	public final int itemID;
+	public final int failedID;
+	public final int groundID;
+	public final int successID;
+	public final int setID;
 	
 	
 	public TrapSpot(Position pos, int readyID, int trappedID, int failID, int droppedID, int invID){
@@ -47,7 +44,7 @@ public class TrapSpot {
 		script.getMouse().click(mainScreenSpot);
 
 		while(!script.myPlayer().getPosition().equals(position) || script.myPlayer().isAnimating()){
-			core.waitTime(300);
+			core.waitTime(400);
 			script.getMouse().click(mainScreenSpot);
 		}
 			
@@ -74,90 +71,109 @@ public class TrapSpot {
 	}
 
 	public void grabTrap(Script script){
-		Objects objects = script.getObjects();
-		List<RS2Object> atLocation = objects.get(position.getX(), position.getY());
-		switch (this.checkTrap()){
+		List<RS2Object> objects = script.getObjects().get(position.getX(), position.getY());
+		switch (this.checkTrap(script)){
 			case FAIL:
-				RS2Object failedTrap;
-				for(int i = 0; i < atLocation.size(); i++){
-					if(atLocation.get(i).getId() == failedID){
-						failedTrap = atLocation.get(i);
-						failedTrap.interact("Dismantle");
-						while(!script.myPlayer().isAnimating()){
-							core.waitTime(10);
-						}
-						while(script.myPlayer().isAnimating()){
-							core.waitTime(100);
+				for(RS2Object x : objects){
+					if(x.getId() == this.failedID){
+						while(x.exists()){
+							x.interact("Dismantle");
+							core.waitTime(300);
 						}
 						break;
 					}
 				}
 				break;
 			case SUCCESS:
-				RS2Object successTrap;
-				for(int i = 0; i < atLocation.size(); i++){
-					if(atLocation.get(i).getId() == successID){
-						successTrap = atLocation.get(i);
-						successTrap.interact("Check");
-						while(!script.myPlayer().isAnimating()){
-							core.waitTime(10);
-						}
-						while(script.myPlayer().isAnimating()){
-							core.waitTime(100);
+				for(RS2Object x : objects){
+					if(x.getId() == this.successID){
+						while(x.exists()){
+							x.interact("Check");
+							core.waitTime(300);
 						}
 						break;
 					}
 				}
 				break;
 			case GROUND:
-				RS2Object groundTrap;
-				for(int i = 0; i < atLocation.size(); i++){
-					if(atLocation.get(i).getId() == groundID){
-						groundTrap = atLocation.get(i);
-						groundTrap.interact("Take");
-						while(!script.myPlayer().isAnimating()){
-							core.waitTime(10);
-						}
-						while(script.myPlayer().isAnimating()){
-							core.waitTime(100);
+				for(RS2Object x : objects){
+					if(x.getId() == this.groundID){
+						while(x.exists()){
+							x.interact("Lay");
+							core.waitTime(300);
 						}
 						break;
 					}
 				}
 				break;
+			default:
+				//do fuck all
+				break;
 		}
 	}
 	
-	private State checkTrap(){
-		//insert logic where we set the state
-		currentState = State.SET;
+	private State checkTrap(Script script){
+		List<RS2Object> objects = script.getObjects().get(position.getX(), position.getY());
+		State currentState = State.UNKNOWN;
+		if(!objects.isEmpty()){
+			for(RS2Object obj : objects){
+				if(obj.getId() == this.setID){
+					currentState = State.SET;
+					break;
+				} else if (obj.getId() == this.failedID){
+					currentState = State.FAIL;
+					break;
+				} else if (obj.getId() == this.groundID){
+					currentState = State.GROUND;
+					break;
+				} else if (obj.getId() == this.successID){
+					currentState = State.SUCCESS;
+					break;
+				} else {
+					currentState = State.UNKNOWN;
+				}
+			}
+		}
+		//TODO: flowered state
+		script.log("State: " + currentState);
 		return currentState;
 	}
 	
-	public boolean isSet(){
-		this.checkTrap();
+	public boolean isSet(Script script){
+		State currentState = this.checkTrap(script);
 		return (currentState == State.SET) ? true : false;
 	}
-	public boolean isGround(){
-		this.checkTrap();
+	public boolean isGround(Script script){
+		State currentState = this.checkTrap(script);
 		return (currentState == State.GROUND) ? true : false;
 	}
-	public boolean isFlowered(){
-		this.checkTrap();
+	public boolean isFlowered(Script script){
+		State currentState = this.checkTrap(script);
 		return (currentState == State.FLOWERED) ? true : false;
 	}
-	public boolean isGood(){
-		this.checkTrap();
+	public boolean isGood(Script script){
+		State currentState = this.checkTrap(script);
 		return (currentState == State.SUCCESS) ? true : false;
 	}
-	public boolean isBad(){
-		this.checkTrap();
+	public boolean isBad(Script script){
+		State currentState = this.checkTrap(script);
 		return (currentState == State.FAIL) ? true : false;
 	}
+	public boolean isUnknown(Script script){
+		State currentState = this.checkTrap(script);
+		return (currentState == State.UNKNOWN) ? true : false;
+	}
 	
-	public boolean equals(TrapSpot trap){
-		if(this.position.equals(trap.position)){
+	@Override
+	public boolean equals(Object trap){
+		if(this == trap){
 			return true;
+		}
+		if(trap == null){
+			return false;
+		}
+		if(!(trap instanceof TrapSpot)){
+			return false;
 		}
 		
 		return false;
